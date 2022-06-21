@@ -2,6 +2,7 @@ package helpers
 
 import (
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 
 	"github.com/spf13/viper"
@@ -29,4 +30,9 @@ func CreateBasicToken() string {
 	encoded := base64.StdEncoding.EncodeToString([]byte(email + ":" + apiKey))
 
 	return "Basic " + encoded
+}
+
+func PrettyPrint(i interface{}) string {
+	s, _ := json.MarshalIndent(i, "", "\t")
+	return string(s)
 }

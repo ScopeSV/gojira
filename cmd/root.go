@@ -1,21 +1,110 @@
 package cmd
 
 import (
-	"log"
+	"bufio"
+	"errors"
 	"os"
 
-	"github.com/spf13/cobra"
+	"github.com/sbvalois/gojira/issues"
+	"github.com/sbvalois/gojira/setup"
+	"github.com/sbvalois/gojira/transitions"
+	"github.com/spf13/viper"
+	"github.com/urfave/cli"
 )
 
-var rootCmd = &cobra.Command{
-	Use: "yo",
-}
-
-func Execute() {
-	rootCmd.PersistentFlags().StringP("name", "n", "stranger", "Name of student")
-
-	if err := rootCmd.Execute(); err != nil {
-		log.Println(err)
-		os.Exit(1)
+func CreateCliApp(filename string) *cli.App {
+	return &cli.App{
+		Name:  "Gojira",
+		Usage: "Get your jira tasks, right in your terminal",
+		Commands: []cli.Command{
+			{
+				Name:  "setup",
+				Usage: "Setup your jira conf",
+				Action: func(c *cli.Context) error {
+					setup.RunBasicSetup(filename, bufio.NewReader(os.Stdin))
+					return nil
+				},
+			},
+			{
+				Name:    "issues",
+				Usage:   "get issues",
+				Aliases: []string{"i"},
+				Subcommands: []cli.Command{
+					{
+						Name:  "open",
+						Usage: "gets all issues with status todo",
+						Action: func(c *cli.Context) error {
+							issues.GetIssues("open")
+							return nil
+						},
+					},
+					{
+						Name:  "inprogress",
+						Usage: "gets all issues with status in progress",
+						Action: func(c *cli.Context) error {
+							issues.GetIssues("inprogress")
+							return nil
+						},
+					},
+				},
+			},
+			{
+				Name:  "issue",
+				Usage: "Get one issue",
+				Action: func(c *cli.Context) error {
+					if c.NArg() == 0 {
+						return errors.New("No issue key provided")
+					}
+					issues.GetIssue(c.Args().First())
+					return nil
+				},
+				Subcommands: []cli.Command{
+					{
+						Name:  "start",
+						Usage: "sets an issue to in progress",
+						Action: func(c *cli.Context) error {
+							if c.NArg() == 0 {
+								return errors.New("No issue key provided")
+							}
+							transitions.Set(c.Args().First(), viper.GetInt("transitions.inProgress"), "IN PROGRESS")
+							return nil
+						},
+					},
+					{
+						Name:  "open",
+						Usage: "sets an issue to open",
+						Action: func(c *cli.Context) error {
+							if c.NArg() == 0 {
+								return errors.New("No issue key provided")
+							}
+							transitions.Set(c.Args().First(), viper.GetInt("transitions.open"), "OPEN")
+							return nil
+						},
+					},
+					{
+						Name:  "review",
+						Usage: "sets an issue to review. This will only work if the issue is already in progress",
+						Action: func(c *cli.Context) error {
+							if c.NArg() == 0 {
+								return errors.New("No issue key provided")
+							}
+							transitions.Set(c.Args().First(), viper.GetInt("transitions.review"), "REVIEW")
+							return nil
+						},
+					},
+					{
+						Name:  "done",
+						Usage: "sets an issue to done. This will only work if the issue is already in progress",
+						Action: func(c *cli.Context) error {
+							if c.NArg() == 0 {
+								return errors.New("No issue key provided")
+							}
+							transitions.Set(c.Args().First(), viper.GetInt("transitions.done"), "DONE")
+							return nil
+						},
+					},
+				},
+			},
+		},
 	}
 }

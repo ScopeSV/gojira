@@ -1,7 +1,11 @@
 package issues
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"log"
+	"net/http"
 
 	"github.com/sbvalois/gojira/helpers"
 )
@@ -40,6 +44,38 @@ func printIssues(issues IssueSearch) {
 		fmt.Println("---------------------------------")
 	}
 }
+
+func requestIssues(issuesUrl string) IssueSearch {
+	//	var url = "https://24so.atlassian.net/rest/api/2/search?jql=status+in+(\"in+progress\")+and+assignee+=+\"sv@email.24sevenoffice.com\"+order+by+priority"
+	req, err := http.NewRequest("GET", issuesUrl, nil)
+	if err != nil {
+		panic(err)
+	}
+
+	req.Header.Set("Authorization", helpers.CreateBasicToken())
+	client := &http.Client{}
+
+	res, err := client.Do(req)
+
+	if err != nil {
+		log.Fatalf("Something went wrong when trying request: %v", err)
+	}
+
+	defer res.Body.Close()
+
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		log.Fatalf("Error while reading body: %v", err)
+	}
+
+	var search IssueSearch
+	if err := json.Unmarshal(body, &search); err != nil {
+		log.Fatalf("Error while unmarshal: %v", err)
+	}
+
+	return search
+}
+
 func GetIssues(issueType string) {
 	//	var url = "https://24so.atlassian.net/rest/api/2/search?jql=status+in+(\"in+progress\",+\"to+do\",+\"done\")+and+assignee+=+\"sv@email.24sevenoffice.com\"+order+by+priority"
 	url := getIssuesUrl(issueType)
