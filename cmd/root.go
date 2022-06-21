@@ -12,6 +12,7 @@ import (
 	"github.com/urfave/cli"
 )
 
+// Contains all cli commands
 func CreateCliApp(filename string) *cli.App {
 	return &cli.App{
 		Name:  "Gojira",
@@ -19,7 +20,7 @@ func CreateCliApp(filename string) *cli.App {
 		Commands: []cli.Command{
 			{
 				Name:  "setup",
-				Usage: "Setup your jira conf",
+				Usage: "Setup your jira integration",
 				Action: func(c *cli.Context) error {
 					setup.RunBasicSetup(filename, bufio.NewReader(os.Stdin))
 					return nil
@@ -27,12 +28,12 @@ func CreateCliApp(filename string) *cli.App {
 			},
 			{
 				Name:    "issues",
-				Usage:   "get issues",
+				Usage:   "Get issues",
 				Aliases: []string{"i"},
 				Subcommands: []cli.Command{
 					{
 						Name:  "open",
-						Usage: "gets all issues with status todo",
+						Usage: "Gets all issues with status todo",
 						Action: func(c *cli.Context) error {
 							issues.GetIssues("open")
 							return nil
@@ -40,7 +41,7 @@ func CreateCliApp(filename string) *cli.App {
 					},
 					{
 						Name:  "inprogress",
-						Usage: "gets all issues with status in progress",
+						Usage: "Gets all issues with status in progress",
 						Action: func(c *cli.Context) error {
 							issues.GetIssues("inprogress")
 							return nil
@@ -83,7 +84,7 @@ func CreateCliApp(filename string) *cli.App {
 					},
 					{
 						Name:  "review",
-						Usage: "sets an issue to review. This will only work if the issue is already in progress",
+						Usage: "Sets an issue to review. This will only work if the issue is already in progress",
 						Action: func(c *cli.Context) error {
 							if c.NArg() == 0 {
 								return errors.New("No issue key provided")
