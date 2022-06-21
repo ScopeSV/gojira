@@ -2,8 +2,6 @@ package main
 
 import (
 	"bufio"
-	"bytes"
-	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -12,7 +10,10 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/sbvalois/gojira/helpers"
+	"github.com/sbvalois/gojira/issues"
 	"github.com/sbvalois/gojira/setup"
+	"github.com/sbvalois/gojira/transitions"
 	"github.com/spf13/viper"
 	"github.com/urfave/cli/v2"
 )
@@ -72,37 +73,6 @@ type Issue struct {
 	} `json:"fields"`
 }
 
-func formatIssueType(issueType string) string {
-	switch issueType {
-	case "open":
-		return "open"
-	case "inprogress":
-		return "in+progress"
-	case "qa":
-		return "qa"
-	}
-	return issueType
-}
-
-func getIssuesUrl(issueType string) string {
-	//	var url = "https://24so.atlassian.net/rest/api/2/search?jql=status+in+(\"in+progress\",+\"to+do\",+\"done\")+and+assignee+=+\"
-	fmt.Println("getJiraSpaceUri", getJiraSpaceUri())
-	return fmt.Sprintf(
-		"https://%s/rest/api/2/search?jql=status+in+(\"%s\")+and+assignee+=+\"%s\"",
-		getJiraSpaceUri(),
-		formatIssueType(issueType),
-		getJiraEmail(),
-	)
-}
-
-func createBasicToken() string {
-	email := viper.GetString("user.email")
-	apiKey := viper.GetString("jira.apiKey")
-	encoded := base64.StdEncoding.EncodeToString([]byte(email + ":" + apiKey))
-
-	return "Basic " + encoded
-}
-
 // TODO Kan lage ett flag som sorterer på date
 func requestIssues(issuesUrl string) IssueSearch {
 	//	var url = "https://24so.atlassian.net/rest/api/2/search?jql=status+in+(\"in+progress\")+and+assignee+=+\"sv@email.24sevenoffice.com\"+order+by+priority"
@@ -111,7 +81,7 @@ func requestIssues(issuesUrl string) IssueSearch {
 		panic(err)
 	}
 	//	req.Header.Set("Authorization", "Basic "+b64Key)
-	req.Header.Set("Authorization", createBasicToken())
+	req.Header.Set("Authorization", helpers.CreateBasicToken())
 	client := &http.Client{}
 
 	res, err := client.Do(req)
@@ -141,7 +111,7 @@ func requestIssue(issueUrl string) Issue {
 	if err != nil {
 		panic(err)
 	}
-	req.Header.Set("Authorization", createBasicToken())
+	req.Header.Set("Authorization", helpers.CreateBasicToken())
 	client := &http.Client{}
 
 	res, err := client.Do(req)
@@ -195,130 +165,16 @@ func printIssue(issue Issue) {
 	fmt.Println("----")
 }
 
-func getJiraSpaceUri() interface{} {
-	return viper.Get("jira.space")
-}
-
-func getJiraEmail() interface{} {
-	return viper.Get("user.email")
-}
-
-func getIssues(issueType string) {
-	//	var url = "https://24so.atlassian.net/rest/api/2/search?jql=status+in+(\"in+progress\",+\"to+do\",+\"done\")+and+assignee+=+\"sv@email.24sevenoffice.com\"+order+by+priority"
-	url := getIssuesUrl(issueType)
-	printIssues(requestIssues(url))
-
-}
-
-func getIssueUrl(issueKey string) string {
-	return fmt.Sprintf("https://%s/rest/api/2/issue/%s", getJiraSpaceUri(), issueKey)
-}
-
 func getIssue(issueKey string) {
 	//	https://24so.atlassian.net/rest/api/2/issue/ERP-2213
 	//	var url = "https://24so.atlassian.net/rest/api/2/search?jql=status+in+(\"in+progress\",+\"to+do\",+\"done\")+and+assignee+=+\"
-	url := getIssueUrl(issueKey)
+	url := helpers.GetIssueUrl(issueKey)
 	printIssue(requestIssue(url))
 }
 
 func PrettyPrint(i interface{}) string {
 	s, _ := json.MarshalIndent(i, "", "\t")
 	return string(s)
-}
-
-func getStartIssueUrl(issueKey string) string {
-	return fmt.Sprintf("https://%s/rest/api/2/issue/%s/transitions", getJiraSpaceUri(), issueKey)
-}
-
-func getTransitionBody(transitionCode int) *bytes.Buffer {
-	postBody, _ := json.Marshal(map[string]map[string]int{
-		"transition": {
-			"id": transitionCode,
-		},
-	})
-	return bytes.NewBuffer(postBody)
-}
-
-func setIssueToOpen(issueKey string) {
-	url := getStartIssueUrl(issueKey)
-	req, err := http.NewRequest("POST", url, getTransitionBody(viper.GetInt("transitions.open")))
-	if err != nil {
-		log.Fatalf("Something went wrong when creating request: %v", err)
-	}
-	req.Header.Set("Authorization", createBasicToken())
-	req.Header.Add("Content-Type", "application/json")
-	res, err := http.DefaultClient.Do(req)
-	if err != nil {
-		log.Fatalf("Something went wrong when trying request: %v", err)
-	}
-
-	if res.StatusCode != http.StatusNoContent {
-		log.Fatalf("Status is already set")
-	} else {
-		fmt.Printf("Status %s is set to OPEN", issueKey)
-	}
-
-}
-
-func setIssueToInProgress(issueKey string) {
-	url := getStartIssueUrl(issueKey)
-	req, err := http.NewRequest("POST", url, getTransitionBody(viper.GetInt("transitions.inProgress")))
-	if err != nil {
-		log.Fatalf("Something went wrong when creating request: %v", err)
-	}
-	req.Header.Set("Authorization", createBasicToken())
-	req.Header.Add("Content-Type", "application/json")
-	res, err := http.DefaultClient.Do(req)
-	if err != nil {
-		log.Fatalf("Something went wrong when trying request: %v", err)
-	}
-
-	if res.StatusCode != http.StatusNoContent {
-		log.Fatalf("Status is already set")
-	} else {
-		fmt.Printf("Status %s is set to IN PROGRESS", issueKey)
-	}
-
-}
-
-func setIssueToReview(issueKey string) {
-	url := getStartIssueUrl(issueKey)
-	req, err := http.NewRequest("POST", url, getTransitionBody(viper.GetInt("transitions.review")))
-	if err != nil {
-		log.Fatalf("Something went wrong when creating request: %v", err)
-	}
-	req.Header.Set("Authorization", createBasicToken())
-	req.Header.Add("Content-Type", "application/json")
-	res, err := http.DefaultClient.Do(req)
-	if err != nil {
-		log.Fatalf("Something went wrong when trying request: %v", err)
-	}
-
-	if res.StatusCode != http.StatusNoContent {
-		log.Fatalf("Status is already set")
-	} else {
-		fmt.Printf("Issue %s is set to REVIEW", issueKey)
-	}
-}
-
-func setIssueDone(issueKey string) {
-	url := getStartIssueUrl(issueKey)
-	req, err := http.NewRequest("POST", url, getTransitionBody(viper.GetInt("transitions.done")))
-	if err != nil {
-		log.Fatalf("Something went wrong when creating request: %v", err)
-	}
-	req.Header.Set("Authorization", createBasicToken())
-	req.Header.Add("Content-Type", "application/json")
-	res, err := http.DefaultClient.Do(req)
-	if err != nil {
-		log.Fatalf("Something went wrong when trying request: %v", err)
-	}
-
-	if res.StatusCode != http.StatusNoContent {
-		log.Fatalf("Status is already set or invalid transition type")
-	} else {
-		fmt.Printf("Issue %s is set to DONE", issueKey)
-	}
 }
 
 var filename string = "config.toml"
@@ -373,7 +229,7 @@ func main() {
 						Name:  "open",
 						Usage: "gets all issues with status todo",
 						Action: func(c *cli.Context) error {
-							getIssues("open")
+							issues.GetIssues("open")
 							return nil
 						},
 					},
@@ -381,7 +237,7 @@ func main() {
 						Name:  "inprogress",
 						Usage: "gets all issues with status in progress",
 						Action: func(c *cli.Context) error {
-							getIssues("inprogress")
+							issues.GetIssues("inprogress")
 							return nil
 						},
 					},
@@ -405,7 +261,7 @@ func main() {
 							if c.NArg() == 0 {
 								return errors.New("No issue key provided")
 							}
-							setIssueToInProgress(c.Args().First())
+							transitions.Set(c.Args().First(), viper.GetInt("transitions.inProgress"), "IN PROGRESS")
 							return nil
 						},
 					},
@@ -416,7 +272,7 @@ func main() {
 							if c.NArg() == 0 {
 								return errors.New("No issue key provided")
 							}
-							setIssueToOpen(c.Args().First())
+							transitions.Set(c.Args().First(), viper.GetInt("transitions.open"), "OPEN")
 							return nil
 						},
 					},
@@ -427,7 +283,7 @@ func main() {
 							if c.NArg() == 0 {
 								return errors.New("No issue key provided")
 							}
-							setIssueToReview(c.Args().First())
+							transitions.Set(c.Args().First(), viper.GetInt("transitions.review"), "REVIEW")
 							return nil
 						},
 					},
@@ -438,7 +294,7 @@ func main() {
 							if c.NArg() == 0 {
 								return errors.New("No issue key provided")
 							}
-							setIssueDone(c.Args().First())
+							transitions.Set(c.Args().First(), viper.GetInt("transitions.done"), "DONE")
 							return nil
 						},
 					},
