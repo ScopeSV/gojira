@@ -166,7 +166,6 @@ func requestIssue(issueUrl string) Issue {
 }
 
 func printIssues(issues IssueSearch) {
-	//	fmt.Println(PrettyPrint(issues))
 	fmt.Println("ISSUES")
 	fmt.Println("------")
 	fmt.Printf("Total: %v\n", issues.Total)
@@ -179,7 +178,6 @@ func printIssues(issues IssueSearch) {
 }
 
 func printIssue(issue Issue) {
-	//	fmt.Println(PrettyPrint(issue))
 	fmt.Println("============")
 	fmt.Println(issue.Key, "-", issue.Fields.Summary)
 	fmt.Println("============")
@@ -243,7 +241,7 @@ func getTransitionBody(transitionCode int) *bytes.Buffer {
 
 func setIssueToOpen(issueKey string) {
 	url := getStartIssueUrl(issueKey)
-	req, err := http.NewRequest("POST", url, getTransitionBody(141))
+	req, err := http.NewRequest("POST", url, getTransitionBody(viper.GetInt("transitions.open")))
 	if err != nil {
 		log.Fatalf("Something went wrong when creating request: %v", err)
 	}
@@ -264,7 +262,7 @@ func setIssueToOpen(issueKey string) {
 
 func setIssueToInProgress(issueKey string) {
 	url := getStartIssueUrl(issueKey)
-	req, err := http.NewRequest("POST", url, getTransitionBody(11))
+	req, err := http.NewRequest("POST", url, getTransitionBody(viper.GetInt("transitions.inProgress")))
 	if err != nil {
 		log.Fatalf("Something went wrong when creating request: %v", err)
 	}
@@ -285,7 +283,7 @@ func setIssueToInProgress(issueKey string) {
 
 func setIssueToReview(issueKey string) {
 	url := getStartIssueUrl(issueKey)
-	req, err := http.NewRequest("POST", url, getTransitionBody(31))
+	req, err := http.NewRequest("POST", url, getTransitionBody(viper.GetInt("transitions.review")))
 	if err != nil {
 		log.Fatalf("Something went wrong when creating request: %v", err)
 	}
@@ -303,9 +301,9 @@ func setIssueToReview(issueKey string) {
 	}
 }
 
-func setIssueToQA(issueKey string) {
+func setIssueDone(issueKey string) {
 	url := getStartIssueUrl(issueKey)
-	req, err := http.NewRequest("POST", url, getTransitionBody(31))
+	req, err := http.NewRequest("POST", url, getTransitionBody(viper.GetInt("transitions.done")))
 	if err != nil {
 		log.Fatalf("Something went wrong when creating request: %v", err)
 	}
@@ -317,9 +315,9 @@ func setIssueToQA(issueKey string) {
 	}
 
 	if res.StatusCode != http.StatusNoContent {
-		log.Fatalf("Status is already set")
+		log.Fatalf("Status is already set or invalid transition type")
 	} else {
-		fmt.Printf("Issue %s is set to REVIEW", issueKey)
+		fmt.Printf("Issue %s is set to DONE", issueKey)
 	}
 }
 
@@ -343,8 +341,6 @@ func init() {
 
 func main() {
 	var language string
-
-	//	os.Exit(0)
 
 	app := &cli.App{
 		Name:  "Gojira",
@@ -432,6 +428,17 @@ func main() {
 								return errors.New("No issue key provided")
 							}
 							setIssueToReview(c.Args().First())
+							return nil
+						},
+					},
+					{
+						Name:  "done",
+						Usage: "sets an issue to done. This will only work if the issue is already in progress",
+						Action: func(c *cli.Context) error {
+							if c.NArg() == 0 {
+								return errors.New("No issue key provided")
+							}
+							setIssueDone(c.Args().First())
 							return nil
 						},
 					},
