@@ -1,14 +1,15 @@
-# This is a basic workflow to help you get started with Actions
+name: goreleaser
 
-name: CI
-
-# Controls when the workflow will run
 on:
-  # Triggers the workflow on push or pull request events but only for the "master" branch
   push:
-    branches: [ "master" ]
-  pull_request:
-    branches: [ "master" ]
+    # run only against tags
+    tags:
+      - '*'
+
+permissions:
+  contents: write
+  # packages: write
+  # issues: write
 
 jobs:
   goreleaser:
@@ -16,15 +17,20 @@ jobs:
     steps:
       -
         name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v2
         with:
           fetch-depth: 0
       -
+        name: Fetch all tags
+        run: git fetch --force --tags
+      -
         name: Set up Go
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.18
       -
         name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v3
+        uses: goreleaser/goreleaser-action@v2
         with:
           # either 'goreleaser' (default) or 'goreleaser-pro'
           distribution: goreleaser
