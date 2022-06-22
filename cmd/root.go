@@ -104,6 +104,17 @@ func CreateCliApp(filename string) *cli.App {
 							return nil
 						},
 					},
+					{
+						Name:  "browser",
+						Usage: "Opens the jira task in your default browser",
+						Action: func(c *cli.Context) error {
+							if c.NArg() == 0 {
+								return errors.New("No issue key provided")
+							}
+							OpenBrowser(c.Args().First())
+							return nil
+						},
+					},
 				},
 			},
 		},

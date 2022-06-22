@@ -23,8 +23,6 @@ func formatIssueType(issueType string) string {
 }
 
 func getIssuesUrl(issueType string) string {
-	//	var url = "https://24so.atlassian.net/rest/api/2/search?jql=status+in+(\"in+progress\",+\"to+do\",+\"done\")+and+assignee+=+\"
-	fmt.Println("GetJiraSpaceUri", helpers.GetJiraSpaceUri())
 	return fmt.Sprintf(
 		"https://%s/rest/api/2/search?jql=status+in+(\"%s\")+and+assignee+=+\"%s\"",
 		helpers.GetJiraSpaceUri(),
@@ -46,7 +44,6 @@ func printIssues(issues IssueSearch) {
 }
 
 func requestIssues(issuesUrl string) IssueSearch {
-	//	var url = "https://24so.atlassian.net/rest/api/2/search?jql=status+in+(\"in+progress\")+and+assignee+=+\"sv@email.24sevenoffice.com\"+order+by+priority"
 	req, err := http.NewRequest("GET", issuesUrl, nil)
 	if err != nil {
 		panic(err)
@@ -77,8 +74,6 @@ func requestIssues(issuesUrl string) IssueSearch {
 }
 
 func GetIssues(issueType string) {
-	//	var url = "https://24so.atlassian.net/rest/api/2/search?jql=status+in+(\"in+progress\",+\"to+do\",+\"done\")+and+assignee+=+\"sv@email.24sevenoffice.com\"+order+by+priority"
 	url := getIssuesUrl(issueType)
 	printIssues(requestIssues(url))
-
 }

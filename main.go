@@ -11,11 +11,6 @@ import (
 	"github.com/spf13/viper"
 )
 
-type IssueSprintType struct {
-}
-
-// TODO Kan lage ett flag som sorterer på date
-
 var filename string = "config.toml"
 
 func init() {
@@ -36,8 +31,8 @@ func init() {
 
 func main() {
 	app := cmd.CreateCliApp(filename)
-	err := app.Run(os.Args)
-	if err != nil {
+
+	if err := app.Run(os.Args); err != nil {
 		log.Fatalf("Something went wrong, %v", err)
 	}
 }

@@ -86,8 +86,6 @@ func printIssue(issue Issue) {
 }
 
 func GetIssue(issueKey string) {
-	//	https://24so.atlassian.net/rest/api/2/issue/ERP-2213
-	//	var url = "https://24so.atlassian.net/rest/api/2/search?jql=status+in+(\"in+progress\",+\"to+do\",+\"done\")+and+assignee+=+\"
 	url := helpers.GetIssueUrl(issueKey)
 	printIssue(requestIssue(url))
 }

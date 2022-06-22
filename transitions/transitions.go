@@ -10,20 +10,20 @@ import (
 	"github.com/sbvalois/gojira/helpers"
 )
 
-func getTransitionBody(transitionCode int) *bytes.Buffer {
-	postBody, _ := json.Marshal(map[string]map[string]int{
+func getTransitionBody(transitionId int) *bytes.Buffer {
+	b, _ := json.Marshal(map[string]map[string]int{
 		"transition": {
-			"id": transitionCode,
+			"id": transitionId,
 		},
 	})
-	return bytes.NewBuffer(postBody)
+	return bytes.NewBuffer(b)
 }
 
 func validateResponse(res *http.Response, issueKey string, trType string) {
 	if res.StatusCode != http.StatusNoContent {
 		log.Fatalf("Status is already set")
 	} else {
-		fmt.Printf("Status %s is set to %s\n", issueKey, trType)
+		fmt.Printf("Issue %s is set to %s\n", issueKey, trType)
 	}
 }
 
