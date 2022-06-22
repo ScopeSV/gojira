@@ -3,6 +3,12 @@ A CLI application that integrates with Jira.
 After annoyance by having to leave Vim / IDE / Editor to check something in jira,
 I created a little application that brings jira issues straight into the terminal.
 
+## Installation
+- Find the newest release under [releases](https://github.com/sbvalois/gojira/releases)
+- Download the correct version for your system.
+- Add the binary to your path for convenience. 
+
+
 ## Usage
 
 ### Setup
