@@ -1,0 +1,32 @@
+builds:
+  - binary: gojira
+    goos:
+      - darwin
+      - linux
+    goarch:
+      - amd64
+      - arm64
+    env:
+      - CGO_ENABLED=0
+    flags:
+      - -mod=vendor
+
+release:
+  prerelease: auto
+
+universal_binaries:
+  - replace: true
+
+brews:
+  -
+    name: gojira
+    homepage: "https://github.com/sbvalois/gojira"
+    tap:
+      owner: sbvalois
+      name: homebrew-sbvalois
+    commit_author:
+      name: Stephan Valois
+      email: stephan@devalo.no
+
+checksum:
+  name_template: 'checksums.txt'
