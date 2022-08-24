@@ -2,6 +2,7 @@ package setup
 
 import (
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/spf13/viper"
@@ -22,7 +23,11 @@ func RunBasicSetup(filename string, r InputReader) {
 		r,
 	)
 
-	viper.WriteConfigAs(filename)
+	if err := viper.WriteConfigAs(filename); err != nil {
+		log.Fatalf("Could not write config: %v", err)
+	}
+
+	SaveConfigGlobally(filename)
 
 	if IsBasicSetupComplete() {
 		fmt.Println("Basic Setup complete")
