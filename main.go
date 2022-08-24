@@ -11,17 +11,19 @@ import (
 	"github.com/spf13/viper"
 )
 
-var filename string = "config.toml"
+const FILE_NAME string = "gojira.toml"
+
+const PATH string = "."
 
 func init() {
-	viper.SetConfigName(filename)
+	viper.SetConfigName(FILE_NAME)
 	viper.SetConfigType("toml")
-	viper.AddConfigPath(".")
+	viper.AddConfigPath("$HOME/.config/gojira")
 
 	if err := viper.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
 			fmt.Println("It looks like you've never ran the setup before")
-			setup.RunBasicSetup(filename, bufio.NewReader(os.Stdin))
+			setup.RunBasicSetup(FILE_NAME, bufio.NewReader(os.Stdin))
 		} else {
 			log.Fatalf("Error reading config file, %s", err)
 		}
@@ -30,7 +32,7 @@ func init() {
 }
 
 func main() {
-	app := cmd.CreateCliApp(filename)
+	app := cmd.CreateCliApp(PATH)
 
 	if err := app.Run(os.Args); err != nil {
 		log.Fatalf("Something went wrong, %v", err)

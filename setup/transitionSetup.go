@@ -32,6 +32,8 @@ func RunTransitionSetup(filename string, r InputReader) {
 		log.Fatalf("Something went wrong when writing config file: %v", err)
 	}
 
+	SaveConfigGlobally(filename)
+
 	fmt.Println("Transition Setup complete")
 	fmt.Println("You may at any point run `gojira setup` to change your settings")
 }
