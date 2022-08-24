@@ -32,7 +32,7 @@ func init() {
 }
 
 func main() {
-	app := cmd.CreateCliApp(PATH)
+	app := cmd.CreateCliApp(FILE_NAME)
 
 	if err := app.Run(os.Args); err != nil {
 		log.Fatalf("Something went wrong, %v", err)
